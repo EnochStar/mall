@@ -12,7 +12,7 @@ import javax.validation.constraints.NotBlank;
  * @date 2020/12/13 21:14
  */
 @Data
-public class UserForm {
+public class UserRegisterForm {
     // @NotEmpty 用于集合
     // @NotNull
     // @NotBlank 用于String 判断空格

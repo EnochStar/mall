@@ -21,12 +21,19 @@ public class ResponseVO<T> {
     private String msg;
     private T data;
 
-    public ResponseVO(Integer status, String msg) {
+    private ResponseVO(Integer status, String msg) {
         this.status = status;
         this.msg = msg;
     }
 
-    public static <T> ResponseVO<T> success(String msg) {
+    private ResponseVO(Integer status, T data) {
+        this.status = status;
+        this.data = data;
+    }
+    public static <T> ResponseVO<T> success(T data) {
+        return new ResponseVO<>(ResponseEnum.SUCCESS.getCode(),data);
+    }
+    public static <T> ResponseVO<T> successByMsg(String msg) {
         return new ResponseVO<>(ResponseEnum.SUCCESS.getCode(),msg);
     }
     public static <T> ResponseVO<T> success() {
