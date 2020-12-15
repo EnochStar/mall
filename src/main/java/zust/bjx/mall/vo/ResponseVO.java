@@ -11,11 +11,14 @@ import java.util.Objects;
  * @author EnochStar
  * @title: ResponseVO
  * @projectName mall
- * @description: TODO
+ * @description:
+ *
+ * //@JsonInclude(Include.NON_NULL) 这个注解放在类头上就可以解决。 实体类与json互转的时候 属性值为null的不参与序列化
  * @date 2020/12/13 20:37
  */
 @Data
 @JsonInclude(value = JsonInclude.Include.NON_NULL)
+
 public class ResponseVO<T> {
     private Integer status;
     private String msg;
