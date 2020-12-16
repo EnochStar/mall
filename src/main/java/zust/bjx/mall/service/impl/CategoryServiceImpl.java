@@ -12,6 +12,7 @@ import zust.bjx.mall.vo.ResponseVO;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static zust.bjx.mall.consts.MallConst.ROOT_PARENT_ID;
@@ -57,6 +58,20 @@ public class CategoryServiceImpl implements CategoryService {
                 .collect(Collectors.toList());
         findSubCatetory(categoryVOList,categories);
         return ResponseVO.success(categoryVOList);
+    }
+
+    @Override
+    public void findSubCategoryId(Integer id, Set<Integer> resultSet) {
+        List<Category> categories = categoryMapper.selectAll();
+        findSubCategoryId(id,resultSet,categories);
+    }
+    private void findSubCategoryId(Integer id, Set<Integer> resultSet,List<Category> categories) {
+        for (Category category : categories) {
+            if (category.getParentId().equals(id)) {
+                resultSet.add(category.getId());
+                findSubCategoryId(category.getId(),resultSet,categories);
+            }
+        }
     }
 
     private void findSubCatetory(List<CategoryVO> categoryVOList, List<Category> categories) {

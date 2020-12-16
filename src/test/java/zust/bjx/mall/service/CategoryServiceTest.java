@@ -1,5 +1,6 @@
 package zust.bjx.mall.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,7 +11,9 @@ import zust.bjx.mall.enums.ResponseEnum;
 import zust.bjx.mall.vo.CategoryVO;
 import zust.bjx.mall.vo.ResponseVO;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author EnochStar
@@ -21,6 +24,7 @@ import java.util.List;
  */
 @SpringBootTest
 @RunWith(SpringRunner.class)
+@Slf4j
 public class CategoryServiceTest {
 
     @Autowired
@@ -29,5 +33,12 @@ public class CategoryServiceTest {
     public void selectAll() {
         ResponseVO<List<CategoryVO>> responseVO = categoryService.selectAll();
         Assert.assertEquals(ResponseEnum.SUCCESS.getCode(),responseVO.getStatus());
+    }
+
+    @Test
+    public void findSubCategoryId(){
+        Set<Integer> set = new HashSet<>();
+        categoryService.findSubCategoryId(100001,set);
+        log.info("set={}",set);
     }
 }
