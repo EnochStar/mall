@@ -1,5 +1,6 @@
 package zust.bjx.mall.service.impl;
 
+import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
@@ -9,10 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import zust.bjx.mall.enums.ResponseEnum;
 import zust.bjx.mall.service.ProductService;
-import zust.bjx.mall.vo.ProductVO;
+import zust.bjx.mall.vo.ProductDetailVO;
 import zust.bjx.mall.vo.ResponseVO;
-
-import java.util.List;
 
 /**
  * @author EnochStar
@@ -31,7 +30,13 @@ public class ProductServiceImplTest {
 
     @Test
     public void list() {
-        ResponseVO<List<ProductVO>> responseVO = productService.list(null,1,1);
+        ResponseVO<PageInfo> responseVO = productService.list(null,2,1);
+        Assert.assertEquals(ResponseEnum.SUCCESS.getCode(),responseVO.getStatus());
+    }
+
+    @Test
+    public void detail(){
+        ResponseVO<ProductDetailVO> responseVO = productService.detail(26);
         Assert.assertEquals(ResponseEnum.SUCCESS.getCode(),responseVO.getStatus());
     }
 }

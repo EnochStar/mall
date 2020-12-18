@@ -1,9 +1,8 @@
 package zust.bjx.mall.service;
 
-import zust.bjx.mall.vo.ProductVO;
+import com.github.pagehelper.PageInfo;
+import zust.bjx.mall.vo.ProductDetailVO;
 import zust.bjx.mall.vo.ResponseVO;
-
-import java.util.List;
 
 /**
  * @author EnochStar
@@ -13,5 +12,7 @@ import java.util.List;
  * @date 2020/12/16 19:52
  */
 public interface ProductService {
-    ResponseVO<List<ProductVO>> list(Integer categoryId, Integer pageNum,Integer pageSize);
+    ResponseVO<PageInfo> list(Integer categoryId, Integer pageNum, Integer pageSize);
+
+    ResponseVO<ProductDetailVO> detail(Integer productId);
 }

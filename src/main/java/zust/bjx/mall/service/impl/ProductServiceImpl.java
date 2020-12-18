@@ -1,11 +1,17 @@
 package zust.bjx.mall.service.impl;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import zust.bjx.mall.dao.ProductMapper;
+import zust.bjx.mall.enums.ProductStatusEnum;
+import zust.bjx.mall.enums.ResponseEnum;
+import zust.bjx.mall.pojo.Product;
 import zust.bjx.mall.service.CategoryService;
 import zust.bjx.mall.service.ProductService;
+import zust.bjx.mall.vo.ProductDetailVO;
 import zust.bjx.mall.vo.ProductVO;
 import zust.bjx.mall.vo.ResponseVO;
 
@@ -31,18 +37,35 @@ public class ProductServiceImpl implements ProductService {
     private ProductMapper productMapper;
 
     @Override
-    public ResponseVO<List<ProductVO>> list(Integer categoryId, Integer pageNum, Integer pageSize) {
+    public ResponseVO<PageInfo> list(Integer categoryId, Integer pageNum, Integer pageSize) {
         Set<Integer> categoryIdSet = new HashSet<>();
         if (categoryId != null) {
             categoryService.findSubCategoryId(categoryId,categoryIdSet);
             categoryIdSet.add(categoryId);
         }
-        List<ProductVO> productVOList = productMapper.selectByCategoryIdSet(categoryIdSet).stream()
+        PageHelper.startPage(pageNum,pageSize);
+        List<Product> products = productMapper.selectByCategoryIdSet(categoryIdSet);
+        List<ProductVO> productVOList = products.stream()
                 .map(e -> {
                     ProductVO productVO = new ProductVO();
                     BeanUtils.copyProperties(e, productVO);
                     return productVO;
                 }).collect(Collectors.toList());
-        return ResponseVO.success(productVOList);
+        PageInfo pageInfo = new PageInfo(products);
+        pageInfo.setList(productVOList);
+        return ResponseVO.success(pageInfo);
+    }
+
+    @Override
+    public ResponseVO<ProductDetailVO> detail(Integer productId) {
+        Product product = productMapper.selectByPrimaryKey(productId);
+        if (product.getStatus().equals(ProductStatusEnum.DELETE.getCode()) ||
+                product.getStatus().equals(ProductStatusEnum.OFF_SALE.getCode()))
+            return ResponseVO.error(ResponseEnum.PRODUCT_OFF_SALE_OR_DELETE);
+        ProductDetailVO productDetailVO = new ProductDetailVO();
+        BeanUtils.copyProperties(product,productDetailVO);
+        // 敏感数据的处理
+        productDetailVO.setStock(product.getStock() > 100 ? 100 : product.getStock());
+        return ResponseVO.success(productDetailVO);
     }
 }
