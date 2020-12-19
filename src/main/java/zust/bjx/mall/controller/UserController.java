@@ -3,10 +3,8 @@ package zust.bjx.mall.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import zust.bjx.mall.consts.MallConst;
-import zust.bjx.mall.enums.ResponseEnum;
 import zust.bjx.mall.form.UserLoginForm;
 import zust.bjx.mall.form.UserRegisterForm;
 import zust.bjx.mall.pojo.User;
@@ -15,7 +13,6 @@ import zust.bjx.mall.vo.ResponseVO;
 
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
-import java.util.Objects;
 
 /**
  * @author EnochStar
@@ -33,14 +30,15 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public ResponseVO register(@Valid @RequestBody UserRegisterForm userRegisterForm,
-                               BindingResult bindingResult) {
-        if (bindingResult.hasErrors()){
-            log.error("注册提交的参数有误,{} {}",
-                    Objects.requireNonNull(bindingResult.getFieldError()).getField()+" "+
-                            bindingResult.getFieldError().getDefaultMessage());
-            return ResponseVO.error(ResponseEnum.PARAM_ERROR,bindingResult);
-        }
+    public ResponseVO register(@Valid @RequestBody UserRegisterForm userRegisterForm
+                               // BindingResult bindingResult
+    ) {
+        // if (bindingResult.hasErrors()){
+        //     log.error("注册提交的参数有误,{} {}",
+        //             Objects.requireNonNull(bindingResult.getFieldError()).getField()+" "+
+        //                     bindingResult.getFieldError().getDefaultMessage());
+        //     return ResponseVO.error(ResponseEnum.PARAM_ERROR,bindingResult);
+        // }
         // log.info("username={}",userForm.getUsername());
         User user = new User();
         BeanUtils.copyProperties(userRegisterForm,user);
@@ -49,14 +47,14 @@ public class UserController {
 
     @PostMapping("login")
     public ResponseVO<User> login(@Valid @RequestBody UserLoginForm userLoginForm,
-                                  BindingResult bindingResult,
+                                  // BindingResult bindingResult,
                                   HttpSession session) {
-        if (bindingResult.hasErrors()) {
-            log.error("登录参数有误，{} {}",
-                    Objects.requireNonNull(bindingResult.getFieldError()).getField()+" "+
-                            bindingResult.getFieldError().getDefaultMessage());
-            return ResponseVO.error(ResponseEnum.PARAM_ERROR,bindingResult);
-        }
+        // if (bindingResult.hasErrors()) {
+        //     log.error("登录参数有误，{} {}",
+        //             Objects.requireNonNull(bindingResult.getFieldError()).getField()+" "+
+        //                     bindingResult.getFieldError().getDefaultMessage());
+        //     return ResponseVO.error(ResponseEnum.PARAM_ERROR,bindingResult);
+        // }
         ResponseVO<User> userResponseVO = userService.login(userLoginForm.getUsername(),userLoginForm.getPassword());
         //session需要在登录成功后才能设置
         session.setAttribute(MallConst.CURRENT_USER,userResponseVO.getData());

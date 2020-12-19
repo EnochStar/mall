@@ -19,7 +19,10 @@ public enum ResponseEnum {
     PARAM_ERROR(3,"参数错误"),
     NEED_LOGIN(10,"用户未登录，请先登录"),
     USERNAME_OR_PASSWORD_ERROR(11,"用户名或者密码错误"),
-    PRODUCT_OFF_SALE_OR_DELETE(12,"商品下架或者删除")
+    PRODUCT_OFF_SALE_OR_DELETE(12,"商品下架或者删除"),
+    PRODUCT_NOT_EXIST(13,"商品不存在"),
+    PRODUCT_STOCK_ERROR(14,"库存不足"),
+
     ;
     Integer code;
     String desc;
