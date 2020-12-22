@@ -2,8 +2,11 @@ package zust.bjx.mall.service;
 
 import zust.bjx.mall.form.CartAddForm;
 import zust.bjx.mall.form.CartUpdateForm;
+import zust.bjx.mall.pojo.Cart;
 import zust.bjx.mall.vo.CartVO;
 import zust.bjx.mall.vo.ResponseVO;
+
+import java.util.List;
 
 /**
  * @author EnochStar
@@ -20,5 +23,5 @@ public interface CartService {
     ResponseVO<CartVO> selectAll(Integer uid);
     ResponseVO<CartVO> unSelectAll(Integer uid);
     ResponseVO<Integer> sum(Integer uid);
-
+    List<Cart> listForCart(Integer uid);
 }

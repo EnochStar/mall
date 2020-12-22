@@ -227,7 +227,8 @@ public class CartServiceImpl implements CartService {
         return ResponseVO.success(sum);
     }
 
-    private List<Cart> listForCart(Integer uid) {
+    @Override
+    public List<Cart> listForCart(Integer uid) {
         HashOperations<String,
                 String, String> opsForHash = stringRedisTemplate.opsForHash();
         String redisKey = String.format(CART_REDIS_KEY_TEMPLATE,uid);
@@ -236,7 +237,6 @@ public class CartServiceImpl implements CartService {
         for (Map.Entry<String, String> entry : entries.entrySet()) {
             cartList.add(gson.fromJson(entry.getValue(),Cart.class));
         }
-
         return cartList;
     }
 }
