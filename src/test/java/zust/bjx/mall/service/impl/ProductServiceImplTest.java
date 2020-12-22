@@ -25,6 +25,8 @@ import zust.bjx.mall.vo.ResponseVO;
 @RunWith(SpringRunner.class)
 public class ProductServiceImplTest {
 
+
+
     @Autowired
     private ProductService productService;
 
