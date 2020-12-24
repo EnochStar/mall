@@ -9,6 +9,11 @@ spring:
   redis:
     host: 127.0.0.1
     port: 6379
+  rabbitmq:
+    addresses: 47.110.66.43
+    port: 5672
+    username: guest
+    password: guest
 #   数据库中属性的下划线转驼峰
 mybatis:
   configuration:

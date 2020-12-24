@@ -2,6 +2,8 @@ package zust.bjx.mall.dao;
 
 import zust.bjx.mall.pojo.Order;
 
+import java.util.List;
+
 public interface OrderMapper {
     int deleteByPrimaryKey(Integer id);
 
@@ -15,4 +17,7 @@ public interface OrderMapper {
 
     int updateByPrimaryKey(Order record);
 
+    List<Order> selectByUid(Integer uid);
+
+    Order selectByOrderNo(Long orderNo);
 }

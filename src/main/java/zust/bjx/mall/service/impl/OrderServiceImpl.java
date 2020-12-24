@@ -1,5 +1,8 @@
 package zust.bjx.mall.service.impl;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +18,7 @@ import zust.bjx.mall.enums.ResponseEnum;
 import zust.bjx.mall.pojo.*;
 import zust.bjx.mall.service.CartService;
 import zust.bjx.mall.service.OrderService;
+import zust.bjx.mall.vo.OrderItemVO;
 import zust.bjx.mall.vo.OrderVO;
 import zust.bjx.mall.vo.ResponseVO;
 
@@ -48,7 +52,7 @@ public class OrderServiceImpl implements OrderService {
     private OrderItemMapper orderItemMapper;
 
     @Override
-    // 由底层数据库决定的 而非Java代码决定
+    // 由底层数据库决定的 而非Java代码决定 默认在出现RuntimeException时回滚
 
     @Transactional
     public ResponseVO<OrderVO> create(Integer uid, Integer shippingId) {
@@ -91,6 +95,13 @@ public class OrderServiceImpl implements OrderService {
             // 生成OrderItem
             OrderItem orderItem = buildOrderItem(uid, orderNo, product, cart.getQuantity());
             orderItemList.add(orderItem);
+
+            // 减库存
+            product.setStock(product.getStock() - cart.getQuantity());
+            int row = productMapper.updateByPrimaryKeySelective(product);
+            if (row <= 0) {
+                return ResponseVO.error(ResponseEnum.ERRPR);
+            }
         }
         // 计算总价（被选中商品）
 
@@ -111,16 +122,120 @@ public class OrderServiceImpl implements OrderService {
         //     orderItemMapper.insertSelective(orderItem);
         // }
 
-        // 减库存
-
-
         // 更新购物车（选中的商品）
-
+        // Redis有事务（打包命令） 无法回滚 因此不在上面的for语句中执行 确保订单下成功后更新
+        for (Cart cart : cartList) {
+            cartService.delete(uid, cart.getProductId());
+        }
 
         // orderVO 返回前端
+        OrderVO orderVO = buildOrderVO(order, orderItemList, shipping);
+        return ResponseVO.success(orderVO);
+    }
 
+    @Override
+    public ResponseVO<PageInfo> list(Integer uid, Integer pageNum, Integer pageSize) {
+        PageHelper.startPage(pageNum,pageSize);
+        List<Order> orderList = orderMapper.selectByUid(uid);
 
-        return null;
+        Set<Long> orderNoSet = orderList.stream()
+                .map(Order::getOrderNo)
+                .collect(Collectors.toSet());
+        List<OrderItem> orderItemList = orderItemMapper.selectByOrderNoSet(orderNoSet);
+
+        Set<Integer> shippingIdSet = orderList.stream()
+                .map(Order::getShippingId)
+                .collect(Collectors.toSet());
+        List<Shipping> shippingList = shippingMapper.selectByIdSet(shippingIdSet);
+
+        // List转map 根据OrderNo
+        Map<Long,List<OrderItem>> orderItemMap = orderItemList.stream()
+                .collect(Collectors.groupingBy(OrderItem::getOrderNo));
+
+        Map<Integer,Shipping> shippingMap = shippingList.stream().
+                collect(Collectors.toMap(Shipping::getId,shipping -> shipping));
+        List<OrderVO> orderVOList = new ArrayList<>();
+        for (Order order : orderList) {
+            OrderVO orderVO = buildOrderVO(order, orderItemMap.get(order.getOrderNo()), shippingMap.get(order.getShippingId()));
+            orderVOList.add(orderVO);
+        }
+        // 传入的是orderList
+        PageInfo pageInfo = new PageInfo(orderList);
+        pageInfo.setList(orderVOList);
+        // 返回orderItemList
+
+        return ResponseVO.success(pageInfo);
+    }
+
+    @Override
+    public ResponseVO<OrderVO> detail(Integer uid, Long orderNo) {
+        Order order = orderMapper.selectByOrderNo(orderNo);
+        if (order == null || !order.getUserId().equals(uid)) {
+            return ResponseVO.error(ResponseEnum.ORDER_NOT_EXIT);
+        }
+        Set<Long> orderNoSet = new HashSet<>();
+        orderNoSet.add(order.getOrderNo());
+        List<OrderItem> orderItemList = orderItemMapper.selectByOrderNoSet(orderNoSet);
+        Shipping shipping = shippingMapper.selectByPrimaryKey(order.getShippingId());
+        OrderVO orderVO = buildOrderVO(order, orderItemList, shipping);
+        return ResponseVO.success(orderVO);
+    }
+
+    @Override
+    public ResponseVO cancel(Integer uid, Long orderNo) {
+        Order order = orderMapper.selectByOrderNo(orderNo);
+        if (order == null || !order.getUserId().equals(uid)){
+            return ResponseVO.error(ResponseEnum.ORDER_NOT_EXIT);
+        }
+        // 只有未付款订单可以取消 根据公司业务
+        if (!order.getStatus().equals(OrderStatusEnum.NO_PAY.getCode())) {
+            return ResponseVO.error(ResponseEnum.ORDER_STATUS_ERROR);
+        }
+        order.setStatus(OrderStatusEnum.CANCELED.getCode());
+        order.setCloseTime(new Date());
+        int row = orderMapper.updateByPrimaryKeySelective(order);
+        if (row <= 0) {
+            return ResponseVO.error(ResponseEnum.ERRPR);
+        }
+        return ResponseVO.success();
+    }
+
+    @Override
+    public void paid(Long orderNo) {
+        Order order = orderMapper.selectByOrderNo(orderNo);
+        if (order == null) {
+            throw new RuntimeException(ResponseEnum.ORDER_NOT_EXIT.getDesc() + "订单id:" + orderNo);
+        }
+        // 只有【未付款】订单可以变成【已付款】
+        if (!order.getStatus().equals(OrderStatusEnum.NO_PAY.getCode())) {
+            throw new RuntimeException(ResponseEnum.ORDER_STATUS_ERROR.getDesc() + "订单id：" + orderNo);
+        }
+        order.setStatus(OrderStatusEnum.PAYD.getCode());
+        order.setPaymentTime(new Date());
+        int row = orderMapper.updateByPrimaryKeySelective(order);
+        if (row <= 0) {
+            throw new RuntimeException("将订单更新为已支付状态失败，订单id:" + orderNo);
+        }
+    }
+
+    private OrderVO buildOrderVO(Order order, List<OrderItem> orderItemList, Shipping shipping) {
+        OrderVO orderVO = new OrderVO();
+        BeanUtils.copyProperties(order,orderVO);
+
+        List<OrderItemVO> orderItemVOList = orderItemList.stream().map( e -> {
+            OrderItemVO orderItemVO = new OrderItemVO();
+            BeanUtils.copyProperties(e,orderItemVO);
+            return orderItemVO;
+        }).collect(Collectors.toList());
+
+        orderVO.setShippingId(shipping.getId());
+        orderVO.setOrderItemVOList(orderItemVOList);
+
+        if (shipping != null){
+            orderVO.setShippingId(shipping.getId());
+            orderVO.setShippingVO(shipping);
+        }
+        return orderVO;
     }
 
     private Order buildOrder(Integer uid,

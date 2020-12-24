@@ -4,6 +4,7 @@ import org.apache.ibatis.annotations.Param;
 import zust.bjx.mall.pojo.OrderItem;
 
 import java.util.List;
+import java.util.Set;
 
 public interface OrderItemMapper {
     int deleteByPrimaryKey(Integer id);
@@ -19,5 +20,7 @@ public interface OrderItemMapper {
     int updateByPrimaryKey(OrderItem record);
 
     int batchinsert(@Param("orderItemList") List<OrderItem> orderItemList);
+
+    List<OrderItem> selectByOrderNoSet(@Param("orderNoSet")Set orderNoSet);
 
 }
